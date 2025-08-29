@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+bank.db
+.env
+dist/
+coverage/
+*.log
