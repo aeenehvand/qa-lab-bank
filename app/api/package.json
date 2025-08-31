@@ -1,15 +1,16 @@
 {
   "name": "qa-lab-bank-api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "NODE_ENV=development node server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.0",
+    "basic-auth": "^2.0.1",
+    "better-sqlite3": "^9.0.0",
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.18.2"
   }
 }

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QA Lab Bank</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+      h1 { margin-bottom: .5rem; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+      label { display: block; margin: .5rem 0 .25rem; }
+      input, button { padding: .5rem; font-size: 1rem; }
+      button { cursor: pointer; }
+      pre { background: #f6f8fa; padding: .75rem; border-radius: 6px; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>QA Lab Bank</h1>
+    <p>Minimal UI to talk to the API.</p>
+
+    <!-- LOGIN -->
+    <div class="card" id="login">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input id="email" type="email" value="demo@bank.test" required />
+        <label for="password">Password</label>
+        <input id="password" type="password" value="demo123" required />
+        <div style="margin-top:.75rem;">
+          <button type="submit">Login</button>
+        </div>
+      </form>
+      <p><strong>Token:</strong> <code id="token">(none)</code></p>
+      <pre id="loginResult"></pre>
+    </div>
+
+    <!-- ACCOUNTS -->
+    <div class="card" id="accounts">
+      <h2>Accounts</h2>
+      <button id="loadAccounts">List Accounts</button>
+      <pre id="accountsResult"></pre>
+    </div>
+
+    <!-- TRANSFER -->
+    <div class="card" id="transfer">
+      <h2>Transfer (demo)</h2>
+      <button id="transfer5">Transfer €5 from ACC-001 → ACC-002</button>
+      <pre id="transferResult"></pre>
+    </div>
+
+    <script>
+      const API = window.location.origin.includes('localhost:3000')
+  ? 'http://localhost:3001/api'   // when you serve UI locally on :3000
+  : '/api';                       // when UI is served by the Express app (Render)
+
+
+      // Show saved token if present
+      const tokenEl = document.getElementById("token");
+      const saved = localStorage.getItem("token");
+      if (saved) tokenEl.textContent = saved;
+
+      // Login handler
+      document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        try {
+          const res = await fetch(`${API}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await res.json();
+          document.getElementById("loginResult").textContent = JSON.stringify(data, null, 2);
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+            tokenEl.textContent = data.token;
+          }
+        } catch (err) {
+          document.getElementById("loginResult").textContent = `Error: ${err}`;
+        }
+      });
+
+      // List Accounts handler
+      document.getElementById("loadAccounts").addEventListener("click", async () => {
+        const token = localStorage.getItem("token");
+        const out = document.getElementById("accountsResult");
+        if (!token) {
+          out.textContent = "Please login first.";
+          return;
+        }
+        try {
+          const res = await fetch(`${API}/accounts`, {
+            headers: { "x-auth-token": token },
+          });
+          const data = await res.json();
+          out.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          out.textContent = `Error: ${err}`;
+        }
+      });
+
+      // Transfer €5 handler
+      document.getElementById("transfer5").addEventListener("click", async () => {
+        const token = localStorage.getItem("token");
+        const out = document.getElementById("transferResult");
+        if (!token) {
+          out.textContent = "Please login first.";
+          return;
+        }
+        try {
+          const res = await fetch(`${API}/transfer`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": token
+            },
+            body: JSON.stringify({
+              from_id: "ACC-001",
+              to_id: "ACC-002",
+              amount_cents: 500,
+              description: "Demo €5 transfer"
+            })
+          });
+          const data = await res.json();
+          out.textContent = JSON.stringify(data, null, 2);
+
+          // refresh accounts after transfer
+          const accRes = await fetch(`${API}/accounts`, { headers: { "x-auth-token": token } });
+          const accData = await accRes.json();
+          document.getElementById("accountsResult").textContent = JSON.stringify(accData, null, 2);
+        } catch (err) {
+          out.textContent = `Error: ${err}`;
+        }
+      });
+    </script>
+  </body>
+</html>
