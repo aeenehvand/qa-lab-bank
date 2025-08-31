@@ -1,7 +1,7 @@
-.DS_Store
+# Playwright artifacts
+playwright-report/
+test-results/
+
+# Node + OS noise
 node_modules/
-bank.db
-.env
-dist/
-coverage/
-*.log
+.DS_Store
