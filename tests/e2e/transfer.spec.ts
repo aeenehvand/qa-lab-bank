@@ -1,14 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test('login, list accounts, transfer €5', async ({ page }) => {
-  // 1. Open the local UI (update the path if your username is different)
-  await page.goto('file:///Users/faeenehvand/Desktop/qa-lab-bank/app/web/index.html');
+  // 1. Open local app (with Basic Auth)
+  await page.goto('http://demo:secret@localhost:3001');
 
   // 2. Login
   await page.fill('#email', 'demo@bank.test');
   await page.fill('#password', 'demo123');
   await page.click('button:has-text("Login")');
-  await expect(page.locator('#token')).not.toHaveText('(none)');
+
+  // ✅ Wait until token appears
+  await expect(page.locator('#token')).toHaveText(/demo-token/);
 
   // 3. List accounts
   await page.click('#loadAccounts');
@@ -17,11 +19,9 @@ test('login, list accounts, transfer €5', async ({ page }) => {
 
   // 4. Transfer €5
   await page.click('#transfer5');
-  const transferResult = await page.locator('#transferResult').textContent();
-  console.log('Transfer result:', transferResult);
-
-  // 5. Verify accounts updated
   const accountsAfter = await page.locator('#accountsResult').textContent();
   console.log('Accounts after transfer:', accountsAfter);
+
+  // Ensure accounts changed
   expect(accountsAfter).not.toEqual(accountsBefore);
 });
