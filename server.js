@@ -1,15 +1,10 @@
-// server.js (ESM)
-// A tiny demo server that matches your Playwright test:
+// server.js (CommonJS)
+// Minimal demo server to satisfy your Playwright test:
 // - Basic Auth: demo / secret
-// - Page with #email, #password, "Login" button, #token
-// - #loadAccounts button renders JSON with ACC-001 and ACC-002 in <pre class="accounts">
+// - Page has: #email, #password, "Login" button, #token
+// - #loadAccounts button renders JSON with ACC-001 & ACC-002 in <pre class="accounts">
 
-import express from 'express';
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,18 +18,17 @@ app.use((req, res, next) => {
   res.status(401).send('Auth required');
 });
 
-// Parse JSON bodies for /login
 app.use(express.json());
 
 // Demo HTML page
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.type('html').send(`<!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
   <title>QA Lab Bank</title>
   <style>
-    body { font-family: sans-serif; max-width: 680px; margin: 40px auto; }
+    body { font-family: system-ui, Arial, sans-serif; max-width: 720px; margin: 40px auto; }
     label { display:block; margin: 8px 0 4px; }
     input, button { padding: 8px; }
     pre.accounts { background:#f6f8fa; padding:12px; border-radius:6px; }
@@ -62,7 +56,7 @@ app.get('/', (req, res) => {
     <pre class="accounts"></pre>
   </section>
 
-  <script type="module">
+  <script>
     const byId = id => document.getElementById(id);
 
     document.getElementById('login-btn').addEventListener('click', async () => {
@@ -88,12 +82,11 @@ app.get('/', (req, res) => {
 });
 
 // API endpoints
-app.post('/login', (req, res) => {
-  // In a real app you'd validate email/password; for demo we always return the token
+app.post('/login', (_req, res) => {
   res.json({ token: 'demo-token' });
 });
 
-app.get('/accounts', (req, res) => {
+app.get('/accounts', (_req, res) => {
   res.json([
     { id: 'ACC-001', balance: 1000 },
     { id: 'ACC-002', balance: 250 }
@@ -101,5 +94,5 @@ app.get('/accounts', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`QA Lab Bank demo listening on http://localhost:${PORT}`);
+  console.log(\`QA Lab Bank demo listening on http://localhost:\${PORT}\`);
 });

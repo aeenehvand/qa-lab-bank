@@ -1,0 +1,17 @@
+id: US-001
+title: Login succeeds with valid credentials
+actor: Customer
+preconditions:
+  - App is reachable at http://localhost:3001 (Basic Auth demo/secret)
+  - Demo user exists: email demo@bank.test / password demo123
+flow:
+  - Open the app home page
+  - Enter email and password
+  - Click Login
+  - See a non-empty token and can list accounts
+postconditions:
+  - Token displayed as "demo-token"
+  - Accounts list shows at least ACC-001 and ACC-002
+notes:
+  - Use local UI with Basic Auth and the current selectors: #email, #password, #loadAccounts, #token
+  - For navigation include Basic Auth in URL: http://demo:secret@localhost:3001
