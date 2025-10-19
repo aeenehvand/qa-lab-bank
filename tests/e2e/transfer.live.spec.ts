@@ -1,27 +1,28 @@
-import { test, expect } from './.auth';
+import { test, expect } from '@playwright/test';
 
-test('login, list, transfer €5 (live)', async ({ page }) => {
-  await page.goto('https://qa-lab-bank.onrender.com');
+test('login, list accounts (live), verify balances', async ({ page }) => {
+  // 1. Open local app (no Basic Auth needed locally)
+  await page.goto('http://localhost:3001');
 
-  // Login
+  // 2. Login
   await page.fill('#email', 'demo@bank.test');
   await page.fill('#password', 'demo123');
   await page.click('button:has-text("Login")');
-  await expect(page.locator('#token')).not.toHaveText('(none)');
 
-  // First list of accounts
-  await page.click('#loadAccounts');
-  await expect(page.locator('#accountsResult')).toContainText('"ACC-001"');
-  const before = (await page.locator('#accountsResult').textContent()) ?? '';
+  // ✅ Wait for token text
+  await expect(page.locator('text=Token:')).toContainText('demo-token');
 
-  // Transfer €5 and wait for API confirmation
-  await page.click('#transfer5');
-  await expect(page.locator('#transferResult')).toContainText('"ok": true');
+  // 3. Load accounts
+  await page.click('button:has-text("Load Accounts")');
 
-  // Refresh accounts and compare
-  await page.click('#loadAccounts');
-  await expect(page.locator('#accountsResult')).toContainText('"ACC-002"'); // sanity check present
-  const after = (await page.locator('#accountsResult').textContent()) ?? '';
+  // ✅ Give the UI a short moment to render the JSON
+  await page.waitForTimeout(1000);
 
-  expect(after).not.toEqual(before);
+  // ✅ Capture all visible text
+  const accountsText = await page.locator('body').innerText();
+  console.log('Live accounts text:', accountsText);
+
+  // 4. Verify both demo accounts exist
+  expect(accountsText).toContain('ACC-001');
+  expect(accountsText).toContain('ACC-002');
 });

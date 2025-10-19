@@ -6,8 +6,11 @@ import YAML from 'yaml';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ✅ Your local LM Studio endpoint
 const LM_URL = 'http://127.0.0.1:1234/v1/chat/completions';
-const MODEL = 'qwen/qwen3-8b';
+
+// ✅ Match your locally loaded model name exactly as shown in LM Studio
+const MODEL = 'qwen3-8b';
 
 function extractTS(raw) {
   if (!raw) return '';
@@ -88,12 +91,16 @@ async function callLLM({ prompt, temperature }) {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: 'You generate ONLY Playwright TypeScript tests. Output a single fenced ts block starting with: import { test, expect } from \'@playwright/test\'; Do NOT include explanations or <think>.' },
+          {
+            role: 'system',
+            content:
+              "You generate ONLY Playwright TypeScript tests. Output a single fenced ts block starting with: import { test, expect } from '@playwright/test'; Do NOT include explanations or <think>.",
+          },
           { role: 'user', content: prompt },
         ],
         temperature,
         stream: false,
-        max_tokens: 1200
+        max_tokens: 1200,
         // NOTE: no "stop" param — avoids LM Studio 400 bug
       }),
     });
@@ -147,12 +154,14 @@ ${raw}
     // Validate; if bad, Retry once at temp 0
     if (!looksLikePlaywright(code)) {
       console.warn("(!) Model didn't return clean TS. Retrying…");
-      const retryPrompt = prompt + '\n\nReturn ONLY a fenced ```ts block that starts with the import line.';
+      const retryPrompt =
+        prompt +
+        '\n\nReturn ONLY a fenced ```ts block that starts with the import line.';
       rawOut = await callLLM({ prompt: retryPrompt, temperature: 0 });
       code = extractTS(rawOut);
     }
   } catch (e) {
-    console.warn("(!) LLM call failed, using deterministic fallback.");
+    console.warn('(!) LLM call failed, using deterministic fallback.');
     code = '';
   }
 

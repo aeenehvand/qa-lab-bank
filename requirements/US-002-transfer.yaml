@@ -1,0 +1,10 @@
+id: US-002
+title: Transfer €5 between accounts
+steps:
+  - Login with demo credentials (demo@bank.test / demo123)
+  - Load account balances
+  - Click the "Transfer €5" button
+  - Wait for updated balances
+expected:
+  - ACC-001 balance decreases by 5
+  - ACC-002 balance increases by 5

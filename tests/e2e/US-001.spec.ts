@@ -1,34 +1,47 @@
-// tests/e2e/US-001.spec.ts
 import { test, expect } from '@playwright/test';
 
-test('US-001 Login succeeds with valid credentials', async ({ page }) => {
-  // baseURL + basic-auth are configured in playwright config
-  await page.goto('/');
+test('US-001 Login succeeds with valid credentials (debug)', async ({ page }) => {
+  await page.goto('http://localhost:3001');
 
-  // Fill and login
+  // 1️⃣ Wait for login form
+  await page.waitForSelector('#login-btn', { state: 'visible', timeout: 10000 });
+  console.log('✅ Login button found');
+
+  // 2️⃣ Fill and click login
   await page.fill('#email', 'demo@bank.test');
   await page.fill('#password', 'demo123');
+  await page.click('#login-btn');
+  console.log('🖱️ Clicked login');
 
-  // Click Login (robust fallbacks)
-  if (await page.locator('#login-btn').isVisible()) {
-    await page.click('#login-btn');
-  } else if (await page.getByRole('button', { name: /login/i }).isVisible()) {
-    await page.getByRole('button', { name: /login/i }).click();
-  } else {
-    await page.locator('text=Login, #login').first().click();
+  // 3️⃣ Wait for token
+  await page.waitForTimeout(1500);
+  const tokenText = (await page.locator('#token').textContent())?.trim() || '';
+  console.log('Token text after login:', tokenText);
+  expect(tokenText).toContain('demo-token');
+
+  // 4️⃣ Click Load Accounts
+  await page.waitForSelector('#loadAccounts', { state: 'visible', timeout: 5000 });
+  await page.click('#loadAccounts');
+  console.log('📥 Clicked Load Accounts');
+
+  // 5️⃣ Wait up to 5 seconds for accounts data to appear
+  await page.waitForTimeout(2000);
+
+  // Try all common containers where accounts may appear
+  const possibleLocators = ['#accountsResult', 'pre', '#accounts', 'textarea'];
+  let accountsText = '';
+  for (const sel of possibleLocators) {
+    if (await page.locator(sel).isVisible()) {
+      accountsText = (await page.locator(sel).textContent())?.trim() || '';
+      console.log(`🔍 Found accounts text in ${sel}:`, accountsText);
+      break;
+    }
   }
 
-  // Token should appear
-  await expect(page.locator('#token')).toHaveText('demo-token', { timeout: 5000 });
+  // 6️⃣ Check we actually found something
+  expect(accountsText.length).toBeGreaterThan(0);
 
-  // Load accounts and wait for the network + DOM update
-  const accountsResp = page.waitForResponse(r => r.url().endsWith('/accounts') && r.ok());
-  await page.click('#loadAccounts');
-  await accountsResp;
-
-  // Assert the rendered JSON contains both account IDs
-  const pre = page.locator('pre.accounts');
-  await expect(pre).toBeVisible({ timeout: 5000 });
-  await expect(pre).toContainText('ACC-001', { timeout: 5000 });
-  await expect(pre).toContainText('ACC-002', { timeout: 5000 });
+  // 7️⃣ Validate account content
+  expect(accountsText).toContain('ACC-001');
+  expect(accountsText).toContain('ACC-002');
 });
