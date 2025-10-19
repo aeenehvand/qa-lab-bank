@@ -5,6 +5,7 @@ test('US-002 Transfer €5 between accounts', async ({ page }) => {
   await page.goto('/');
 
   // 2️⃣ Fill login form
+  
   await page.fill('#email', 'demo@bank.test');
   await page.fill('#password', 'demo123');
 
