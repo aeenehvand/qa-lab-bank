@@ -5,7 +5,6 @@ test('US-002 Transfer €5 between accounts', async ({ page }) => {
   await page.goto('/');
 
   // 2️⃣ Fill login form
-  
   await page.fill('#email', 'demo@bank.test');
   await page.fill('#password', 'demo123');
 
@@ -26,13 +25,20 @@ test('US-002 Transfer €5 between accounts', async ({ page }) => {
   await page.click('#loadAccounts');
   console.log('📥 Clicked Load Accounts');
 
-  // 6️⃣ Wait for accounts data to appear
+  // 6️⃣ Wait for accounts data to appear with content
   const pre = page.locator('pre, #accounts, textarea').first();
-  await pre.waitFor({ state: 'visible', timeout: 5000 });
+
+  // Wait until the content actually includes ACC-, not just visible
+  await expect
+    .poll(async () => (await pre.textContent())?.trim() || '', {
+      message: 'Waiting for accounts data to load...',
+      timeout: 7000,
+    })
+    .toContain('ACC-');
 
   // 7️⃣ Read and log account data
   const text = (await pre.textContent()) || '';
-  console.log('Accounts text:', text);
+  console.log('Accounts text after load:', text);
 
   // 8️⃣ Verify account IDs
   try {
@@ -44,4 +50,6 @@ test('US-002 Transfer €5 between accounts', async ({ page }) => {
     expect(text).toContain('ACC-001');
     expect(text).toContain('ACC-002');
   }
+
+  console.log('✅ Transfer test completed successfully');
 });
